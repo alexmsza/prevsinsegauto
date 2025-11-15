@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado da Previsão de Sinistros</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        h1, h2, h3 {
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            overflow-x: auto;
+            flex: 1 1 400px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        pre {
+            text-align: left;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .table th {
+            background-color: #f2f2f2;
+        }
+        .tasks {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Projeto de Previsão de Sinistros de Seguro Automotivo</h1>
+
+    <div class="container">
+        <div class="card">
+            <h2>Tarefas Realizadas</h2>
+            <div class="tasks">
+                <h3>1. Aplicar lowercase em todas as colunas</h3>
+                <p>Todas as colunas do dataframe foram convertidas para lowercase para padronizar os nomes.</p>
+                <pre><code>df.columns = df.columns.str.lower()</code></pre>
+
+                <h3>2. Excluir caracteres especiais dos nomes das colunas</h3>
+                <p>Caracteres especiais foram removidos dos nomes das colunas para evitar problemas em futuras manipulações.</p>
+                <pre><code>df.columns = df.columns.str.replace('[^\\w\\s]', '', regex=True)</code></pre>
+
+                <h3>3. Tratamento dos outliers</h3>
+                <p>Outliers foram tratados utilizando o método IQR (Interquartile Range). Valores fora do intervalo [Q1 - 1.5*IQR, Q3 + 1.5*IQR] foram substituídos pelos limites do intervalo.</p>
+                <pre><code>for col in df.select_dtypes(include=['float64', 'int64']).columns:
+    q1 = df[col].quantile(0.25)
+    q3 = df[col].quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    df[col] = np.where(df[col] &lt; lower_bound, lower_bound, df[col])
+    df[col] = np.where(df[col] &gt; upper_bound, upper_bound, df[col])</code></pre>
+
+                <h3>4. Tratamento dos missing values</h3>
+                <p>Valores ausentes em colunas numéricas foram preenchidos com a média da coluna, e em colunas categóricas com a moda (valor mais frequente).</p>
+                <pre><code>for col in df.select_dtypes(include=['float64', 'int64']).columns:
+    df[col].fillna(df[col].mean(), inplace=True)
+for col in df.select_dtypes(include=['object']).columns:
+    df[col].fillna(df[col].mode()[0], inplace=True)</code></pre>
+
+                <h3>5. Lidar com dados categóricos</h3>
+                <p>A coluna 'age' foi convertida para um formato numérico, substituindo as faixas de idade pela média da faixa. As outras colunas categóricas foram transformadas em colunas numéricas utilizando one-hot encoding.</p>
+                <pre><code>def age_to_numeric(age):
+    if age == '16-25':
+        return 20.5
+    elif age == '26-39':
+        return 32.5
+    elif age == '40-64':
+        return 52
+    elif age == '65+':
+        return 65
+    else:
+        return np.nan
+
+df['age'] = df['age'].apply(age_to_numeric)
+
+categorical_cols = df.select_dtypes(include=['object']).columns
+df = pd.get_dummies(df, columns=categorical_cols, drop_first=True)</code></pre>
+
+                <h3>6. Fazer EDA (Análise Exploratória de Dados)</h3>
+                <p>Foi gerado um histograma da distribuição de idade e uma matriz de correlação para entender a relação entre as variáveis.</p>
+                <pre><code>plt.figure(figsize=(10, 6))
+sns.histplot(df['age'], bins=20, kde=True)
+plt.title('Distribuição de Idade')
+plt.xlabel('Idade')
+plt.ylabel('Frequência')
+plt.savefig('age_distribution.png')
+
+plt.figure(figsize=(12, 8))
+corr_matrix = df.corr()
+sns.heatmap(corr_matrix, annot=False, cmap='coolwarm')
+plt.title('Matriz de Correlação')
+plt.savefig('correlation_matrix.png')</code></pre>
+
+                <h3>7. Seleção de features</h3>
+                <p>A coluna 'outcome' foi definida como a variável alvo (y) e as outras colunas como features (X).</p>
+                <pre><code>X = df.drop('outcome', axis=1)
+y = df['outcome']</code></pre>
+
+                <h3>8. Definir as amostras de treinamento e validação</h3>
+                <p>Os dados foram divididos em 80% para treinamento e 20% para teste.</p>
+                <pre><code>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)</code></pre>
+
+                <h3>9. Escolher o algoritmo a ser aplicado</h3>
+                <p>Foi utilizado o algoritmo RandomForestClassifier, um modelo de ensemble que combina várias árvores de decisão para obter uma melhor performance.</p>
+                <pre><code>model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)</code></pre>
+
+                <h3>10. Métricas de performance dos algoritmos</h3>
+                <p>Foram calculadas a acurácia, o relatório de classificação (com precisão, recall e f1-score) e a matriz de confusão para avaliar a performance do modelo.</p>
+                <pre><code>y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Acurácia: {accuracy:.2f}')
+print(classification_report(y_test, y_pred))
+conf_matrix = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
+plt.title('Matriz de Confusão')
+plt.xlabel('Previsto')
+plt.ylabel('Verdadeiro')
+plt.savefig('confusion_matrix.png')</code></pre>
+
+                <h3>11. Selecionar o melhor modelo preditivo</h3>
+                <p>Apenas um modelo foi treinado, mas obteve uma acurácia de 83%, o que é um bom resultado inicial.</p>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <h2>Distribuição de Idade</h2>
+            <img src="age_distribution.png" alt="Distribuição de Idade">
+        </div>
+        <div class="card">
+            <h2>Matriz de Correlação</h2>
+            <img src="correlation_matrix.png" alt="Matriz de Correlação">
+        </div>
+        <div class="card">
+            <h2>Matriz de Confusão</h2>
+            <img src="confusion_matrix.png" alt="Matriz de Confusão">
+        </div>
+        <div class="card">
+            <h2>Relatório de Classificação</h2>
+            <pre>
+              precision    recall  f1-score   support
+
+         0.0       0.85      0.91      0.88      1367
+         1.0       0.77      0.66      0.71       633
+
+    accuracy                           0.83      2000
+   macro avg       0.81      0.79      0.80      2000
+weighted avg       0.83      0.83      0.83      2000
+            </pre>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+    <h2>Dados Originais</h2>
+    <table border="1" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>ID</th>
+      <th>AGE</th>
+      <th>GENDER</th>
+      <th>RACE</th>
+      <th>DRIVING_EXPERIENCE</th>
+      <th>EDUCATION</th>
+      <th>INCOME</th>
+      <th>CREDIT_SCORE</th>
+      <th>VEHICLE_OWNERSHIP</th>
+      <th>VEHICLE_YEAR</th>
+      <th>MARRIED</th>
+      <th>CHILDREN</th>
+      <th>POSTAL_CODE</th>
+      <th>ANNUAL_MILEAGE</th>
+      <th>VEHICLE_TYPE</th>
+      <th>SPEEDING_VIOLATIONS</th>
+      <th>DUIS</th>
+      <th>PAST_ACCIDENTS</th>
+      <th>OUTCOME</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>569520</td>
+      <td>65+</td>
+      <td>female</td>
+      <td>majority</td>
+      <td>0-9y</td>
+      <td>high school</td>
+      <td>upper class</td>
+      <td>0.629027</td>
+      <td>1.0</td>
+      <td>after 2015</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>10238</td>
+      <td>12000.0</td>
+      <td>sedan</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>750365</td>
+      <td>16-25</td>
+      <td>male</td>
+      <td>majority</td>
+      <td>0-9y</td>
+      <td>none</td>
+      <td>poverty</td>
+      <td>0.357757</td>
+      <td>0.0</td>
+      <td>before 2015</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10238</td>
+      <td>16000.0</td>
+      <td>sedan</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <td>199901</td>
+      <td>16-25</td>
+      <td>female</td>
+      <td>majority</td>
+      <td>0-9y</td>
+      <td>high school</td>
+      <td>working class</td>
+      <td>0.493146</td>
+      <td>1.0</td>
+      <td>before 2015</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10238</td>
+      <td>11000.0</td>
+      <td>sedan</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>478866</td>
+      <td>16-25</td>
+      <td>male</td>
+      <td>majority</td>
+      <td>0-9y</td>
+      <td>university</td>
+      <td>working class</td>
+      <td>0.206013</td>
+      <td>1.0</td>
+      <td>before 2015</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>32765</td>
+      <td>11000.0</td>
+      <td>sedan</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>731664</td>
+      <td>26-39</td>
+      <td>male</td>
+      <td>majority</td>
+      <td>10-19y</td>
+      <td>none</td>
+      <td>working class</td>
+      <td>0.388366</td>
+      <td>1.0</td>
+      <td>before 2015</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>32765</td>
+      <td>12000.0</td>
+      <td>sedan</td>
+      <td>2</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div class="card">
+    <h2>Dados Alterados</h2>
+    <table border="1" class="dataframe table table-striped">
+  <thead>
+    <tr style="text-align: right;">
+      <th>id</th>
+      <th>age</th>
+      <th>credit_score</th>
+      <th>vehicle_ownership</th>
+      <th>married</th>
+      <th>children</th>
+      <th>postal_code</th>
+      <th>annual_mileage</th>
+      <th>speeding_violations</th>
+      <th>duis</th>
+      <th>past_accidents</th>
+      <th>outcome</th>
+      <th>gender_male</th>
+      <th>race_minority</th>
+      <th>driving_experience_10-19y</th>
+      <th>driving_experience_20-29y</th>
+      <th>driving_experience_30y+</th>
+      <th>education_none</th>
+      <th>education_university</th>
+      <th>income_poverty</th>
+      <th>income_upper class</th>
+      <th>income_working class</th>
+      <th>vehicle_year_before 2015</th>
+      <th>vehicle_type_sports car</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>569520.0</td>
+      <td>65.0</td>
+      <td>0.629027</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>10238.0</td>
+      <td>12000.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>750365.0</td>
+      <td>20.5</td>
+      <td>0.357757</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10238.0</td>
+      <td>16000.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>199901.0</td>
+      <td>20.5</td>
+      <td>0.493146</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10238.0</td>
+      <td>11000.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>478866.0</td>
+      <td>20.5</td>
+      <td>0.206013</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>32765.0</td>
+      <td>11000.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <td>731664.0</td>
+      <td>32.5</td>
+      <td>0.388366</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>32765.0</td>
+      <td>12000.0</td>
+      <td>2.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>True</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+    </div>
+
+</body>
+</html>
