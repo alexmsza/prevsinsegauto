@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Projeto Car Insurance Claim Prediction
 
 Objetivo: Construir um modelo de classificação para predição dos sinistros.
@@ -88,4 +87,3 @@ papermill PrevSinSegAuto.ipynb
 ```
 start index.html
 ```
->>>>>>> 26d1d43d272606d9ad9c7491ccedac4807e4cdab
