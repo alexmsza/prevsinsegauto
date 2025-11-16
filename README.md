@@ -21,6 +21,9 @@ O conjunto de dados contém várias informações sobre segurados e a variável 
 11. Selecionar o melhor modelo preditivo;
 
 ## Como Executar o Projeto
+
+### obs: Versão do Python 3.13.9, estou usando VScode, no Windows 11.
+
 1. Clone o repositório:
 ```
 git clone https://github.com/alexmsza/prevsinsegauto
@@ -29,6 +32,10 @@ git clone https://github.com/alexmsza/prevsinsegauto
 ```
 python -m venv .venv
 source .venv/Scripts/activate
+```
+ou se tiver no Windows
+```
+.\.venv\Scripts\activate
 ```
 3. Instale as dependências:
 ```
