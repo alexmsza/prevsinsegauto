@@ -19,3 +19,26 @@ O conjunto de dados contém várias informações sobre segurados e a variável 
 9. Escolher o algoritmo a ser aplicado;
 10. Métricas de performance dos algoritmos;
 11. Selecionar o melhor modelo preditivo;
+
+## Como Executar o Projeto
+1. Clone o repositório:
+```
+git clone <url-do-repositorio>
+```
+2. Crie e ative um ambiente virtual:
+```
+python -m venv .venv
+source .venv/Scripts/activate
+```
+3. Instale as dependências:
+```
+pip install -r requirements.txt
+```
+4. Execute o notebook Jupyter:
+```
+papermill PrevSinSegAuto.ipynb
+```
+5. Abra o arquivo `index.html` para ver os resultados:
+```
+start index.html
+```
