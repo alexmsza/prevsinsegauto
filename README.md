@@ -23,7 +23,7 @@ O conjunto de dados contém várias informações sobre segurados e a variável 
 ## Como Executar o Projeto
 1. Clone o repositório:
 ```
-git clone [<url-do-repositorio>](https://github.com/alexmsza/prevsinsegauto)
+git clone https://github.com/alexmsza/prevsinsegauto
 ```
 2. Crie e ative um ambiente virtual:
 ```
